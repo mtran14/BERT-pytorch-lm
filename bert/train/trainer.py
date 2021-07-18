@@ -63,6 +63,7 @@ class Trainer:
             try:
                 predictions, batch_losses = self.loss_model(inputs, targets)
             except:
+                self.optimizer.zero_grad()
                 continue
             predictions = convert_to_array(predictions)
             targets = convert_to_array(targets)
@@ -76,9 +77,11 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(self.loss_model.parameters(), 1)
                 self.optimizer.step()
 
-            epoch_loss = (epoch_loss * epoch_count + batch_loss.item() * batch_count) / (epoch_count + batch_count)
+            epoch_loss = (epoch_loss * epoch_count + batch_loss.item()
+                          * batch_count) / (epoch_count + batch_count)
 
-            batch_metrics = [metric_function(predictions, targets) for metric_function in self.metric_functions]
+            batch_metrics = [metric_function(predictions, targets)
+                             for metric_function in self.metric_functions]
             epoch_metrics = [(epoch_metric * epoch_count + batch_metric * batch_count) / (epoch_count + batch_count)
                              for epoch_metric, batch_metric in zip(epoch_metrics, batch_metrics)]
 
@@ -97,7 +100,8 @@ class Trainer:
             self.loss_model.train()
 
             epoch_start_time = datetime.now()
-            train_epoch_loss, train_epoch_metrics = self.run_epoch(self.train_dataloader, mode='train')
+            train_epoch_loss, train_epoch_metrics = self.run_epoch(
+                self.train_dataloader, mode='train')
             epoch_end_time = datetime.now()
 
             self.loss_model.eval()
@@ -105,15 +109,18 @@ class Trainer:
             val_epoch_loss, val_epoch_metrics = self.run_epoch(self.val_dataloader, mode='val')
 
             if epoch % self.print_every == 0 and self.logger:
-                per_second = len(self.train_dataloader.dataset) / ((epoch_end_time - epoch_start_time).seconds + 1)
+                per_second = len(self.train_dataloader.dataset) / \
+                    ((epoch_end_time - epoch_start_time).seconds + 1)
                 current_lr = self.optimizer.param_groups[0]['lr']
                 log_message = LOG_FORMAT.format(epoch=epoch,
                                                 progress=epoch / epochs,
                                                 per_second=per_second,
                                                 train_loss=train_epoch_loss,
                                                 val_loss=val_epoch_loss,
-                                                train_metrics=[round(metric, 4) for metric in train_epoch_metrics],
-                                                val_metrics=[round(metric, 4) for metric in val_epoch_metrics],
+                                                train_metrics=[round(metric, 4)
+                                                               for metric in train_epoch_metrics],
+                                                val_metrics=[round(metric, 4)
+                                                             for metric in val_epoch_metrics],
                                                 current_lr=current_lr,
                                                 elapsed=self._elapsed_time()
                                                 )
@@ -121,7 +128,8 @@ class Trainer:
                 self.logger.info(log_message)
 
             if epoch % self.save_every == 0:
-                self._save_model(epoch, train_epoch_loss, val_epoch_loss, train_epoch_metrics, val_epoch_metrics)
+                self._save_model(epoch, train_epoch_loss, val_epoch_loss,
+                                 train_epoch_metrics, val_epoch_metrics)
 
     def _save_model(self, epoch, train_epoch_loss, val_epoch_loss, train_epoch_metrics, val_epoch_metrics):
 

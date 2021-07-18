@@ -7,7 +7,7 @@ from .datasets.classification import SST2IndexedDataset
 from .trainer import Trainer
 from .utils.log import make_run_name, make_logger, make_checkpoint_dir
 from .utils.collate import pretraining_collate_function, classification_collate_function
-from .optimizers import NoamOptimizer
+from .optimizers import BertAdam
 
 import torch
 from torch.nn import DataParallel
@@ -81,8 +81,9 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
         batch_size=batch_size,
         collate_fn=pretraining_collate_function)
 
-    optimizer = NoamOptimizer(model.parameters(),
-                              d_model=hidden_size, factor=2, warmup_steps=10000, betas=(0.9, 0.999), weight_decay=0.01)
+    n_steps = len(train_dataloader) * epochs
+    
+    optimizer = BertAdam(model.parameters(), lr=1e-3, warmup=0.05, t_total=n_steps)
 
     checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
 
