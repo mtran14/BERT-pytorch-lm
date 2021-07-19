@@ -144,8 +144,16 @@ def finetune(pretrained_checkpoint,
     logger.info('Building model...')
     pretrained_model = build_model(layers_count, hidden_size, heads_count,
                                    d_ff, dropout_prob, max_len, vocabulary_size)
-    pretrained_model.load_state_dict(torch.load(
-        pretrained_checkpoint, map_location='cpu')['state_dict'])
+    # pretrained_model.load_state_dict(torch.load(
+    #     pretrained_checkpoint, map_location='cpu')['state_dict'])
+    trained_sd = torch.load(pretrained_checkpoint, map_location='cpu')['state_dict']
+    key_list = list(trained_sd.keys())
+    for key in key_list:
+        if(key.startswith('model.')):
+            newKey = key[6:]
+            trained_sd[newKey] = trained_sd.pop(key)
+    pretrained_model.load_state_dict(trained_sd)
+    print('Successfully load pretrained model...')
 
     model = FineTuneModel(pretrained_model, hidden_size, num_classes=3)
 
