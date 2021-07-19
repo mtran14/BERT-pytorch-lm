@@ -94,20 +94,6 @@ class Trainer:
 
         return epoch_loss, epoch_metrics
 
-    def fe_helper(self, dataloader):
-        for inputs, targets, batch_count in tqdm(dataloader):
-            inputs = convert_to_tensor(inputs, self.device)
-            targets = convert_to_tensor(targets, self.device)
-            # try:
-            token_predictions, classification_embedding = self.loss_model(
-                inputs, targets)  # loss_model is the pretrain bert model
-            # except:
-            #     self.optimizer.zero_grad()
-            #     continue
-            classification_embedding = convert_to_array(classification_embedding)
-            targets = convert_to_array(targets)
-            print(classification_embedding.shape, targets.shape)
-
     def run(self, epochs=10):
 
         for epoch in range(self.epoch, epochs + 1):
@@ -153,11 +139,6 @@ class Trainer:
             if epoch % self.save_every == 0:
                 self._save_model(epoch, train_epoch_loss, val_epoch_loss,
                                  train_epoch_metrics, val_epoch_metrics)
-
-    def extract_feature(self):
-        self.fe_helper(self.train_dataloader)
-        self.run_epoch(self.val_dataloader)
-        self.run_epoch(self.test_dataloader)
 
     def _save_model(self, epoch, train_epoch_loss, val_epoch_loss, train_epoch_metrics, val_epoch_metrics):
 

@@ -20,6 +20,7 @@ import random
 import numpy as np
 from os.path import join
 from tqdm import tqdm
+import pandas as pd
 
 RUN_NAME_FORMAT = (
     "BERT-"
@@ -159,7 +160,7 @@ def finetune(pretrained_checkpoint,
     print('Successfully load pretrained model...')
 
     # =================================================
-    def fe_helper(model, dataloader):
+    def fe_helper(model, dataloader, file_name_out):
         features, labels = [], []
         for inputs, targets, batch_count in tqdm(dataloader):
             inputs = convert_to_tensor(inputs, device)
@@ -177,7 +178,7 @@ def finetune(pretrained_checkpoint,
         f_features = np.concatenate(features, axis=0)
         f_labels = np.concatenate(labels, axis=0).reshape(-1, 1)
         f_out = np.concatenate([f_features, f_labels], axis=1)
-        print(f_out.shape)
+        pd.DataFrame(f_out).to_csv(file_name_out, header=None, index=False)
 
     print('Extracting features ...')
     train_dataloader = DataLoader(
@@ -195,7 +196,9 @@ def finetune(pretrained_checkpoint,
         batch_size=batch_size,
         collate_fn=classification_collate_function)
     pretrained_model.to(device)
-    fe_helper(pretrained_model, train_dataloader)
+    fe_helper(pretrained_model, train_dataloader, "train.csv")
+    fe_helper(pretrained_model, val_dataloader, "dev.csv")
+    fe_helper(pretrained_model, test_dataloader, "test.csv")
     # =================================================
 
     model = FineTuneModel(pretrained_model, hidden_size, num_classes=3)

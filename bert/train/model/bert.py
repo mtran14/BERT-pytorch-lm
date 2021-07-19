@@ -35,12 +35,13 @@ class FineTuneModel(nn.Module):
 
         self.pretrained_model = pretrained_model
 
-        new_classification_layer = nn.Linear(hidden_size, num_classes)
-        self.pretrained_model.classification_layer = new_classification_layer
+        self.new_classification_layer = nn.Linear(hidden_size, num_classes)
+        # self.pretrained_model.classification_layer = new_classification_layer
 
     def forward(self, inputs):
         sequence, segment = inputs
-        token_predictions, classification_outputs = self.pretrained_model((sequence, segment))
+        token_predictions, classification_embedding = self.pretrained_model((sequence, segment))
+        classification_outputs = self.new_classification_layer(classification_embedding)
         return classification_outputs
 
 
