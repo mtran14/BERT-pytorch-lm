@@ -160,6 +160,7 @@ def finetune(pretrained_checkpoint,
 
     # =================================================
     def fe_helper(model, dataloader):
+        features, labels = [], []
         for inputs, targets, batch_count in tqdm(dataloader):
             inputs = convert_to_tensor(inputs, device)
             targets = convert_to_tensor(targets, device)
@@ -171,7 +172,12 @@ def finetune(pretrained_checkpoint,
             #     continue
             classification_embedding = convert_to_array(classification_embedding)
             targets = convert_to_array(targets)
-            print(classification_embedding.shape, targets.shape)
+            features.append(classification_embedding)
+            labels.append(targets)
+        f_features = np.concatenate(features, axis=0)
+        f_labels = np.concatenate(labels, axis=0).reshape(-1, 1)
+        f_out = np.concatenate([f_features, f_labels], axis=1)
+        print(f_out.shape)
 
     print('Extracting features ...')
     train_dataloader = DataLoader(
