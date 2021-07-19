@@ -165,7 +165,7 @@ def finetune(pretrained_checkpoint,
             targets = convert_to_tensor(targets, device)
             # try:
             token_predictions, classification_embedding = model(
-                inputs, targets)  # loss_model is the pretrain bert model
+                inputs)  # loss_model is the pretrain bert model
             # except:
             #     self.optimizer.zero_grad()
             #     continue
