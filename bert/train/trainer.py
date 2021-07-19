@@ -67,7 +67,7 @@ class Trainer:
                 continue
             predictions = convert_to_array(predictions)
             targets = convert_to_array(targets)
-            print(predictions, target)
+            print(predictions, targets)
             batch_loss = batch_losses.mean()
 
             if mode == 'train':
