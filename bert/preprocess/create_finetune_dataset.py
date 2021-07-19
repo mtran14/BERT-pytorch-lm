@@ -112,9 +112,9 @@ if(data_type != "meld"):
     pd.DataFrame(output_test).to_csv(data_type + '_test.tsv',
                                      sep='\t', index=False, header=['sentence', 'label'])
 else:
-    path_train = "/shares/perception-working/minh/facemesh_emotion_data/meld6/train/"
-    path_dev = "/shares/perception-working/minh/facemesh_emotion_data/meld6/val/"
-    path_test = "/shares/perception-working/minh/facemesh_emotion_data/meld6/test/"
+    path_train = "/data/perception-working/minh/facemesh_emotion_data/meld6/train/"
+    path_dev = "/data/perception-working/minh/facemesh_emotion_data/meld6/val/"
+    path_test = "/data/perception-working/minh/facemesh_emotion_data/meld6/test/"
     output_train, output_test, output_val = [], [], []
     for file in os.listdir(path_train):
         current_data = pd.read_csv(os.path.join(path_train, file), header=None).values
