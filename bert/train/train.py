@@ -42,7 +42,8 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
     val_path = val_path if data_dir is None else join(data_dir, val_path)
     dictionary_path = dictionary_path if data_dir is None else join(data_dir, dictionary_path)
 
-    run_name = run_name if run_name is not None else make_run_name(RUN_NAME_FORMAT, phase='pretrain', config=config)
+    run_name = run_name if run_name is not None else make_run_name(
+        RUN_NAME_FORMAT, phase='pretrain', config=config)
     logger = make_logger(run_name, log_output)
     logger.info('Run name : {run_name}'.format(run_name=run_name))
     logger.info(config)
@@ -54,12 +55,15 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
     logger.info(f'dictionary vocabulary : {vocabulary_size} tokens')
 
     logger.info('Loading datasets...')
-    train_dataset = PairedDataset(data_path=train_path, dictionary=dictionary, dataset_limit=dataset_limit)
-    val_dataset = PairedDataset(data_path=val_path, dictionary=dictionary, dataset_limit=dataset_limit)
+    train_dataset = PairedDataset(
+        data_path=train_path, dictionary=dictionary, dataset_limit=dataset_limit)
+    val_dataset = PairedDataset(data_path=val_path, dictionary=dictionary,
+                                dataset_limit=dataset_limit)
     logger.info('Train dataset size : {dataset_size}'.format(dataset_size=len(train_dataset)))
 
     logger.info('Building model...')
-    model = build_model(layers_count, hidden_size, heads_count, d_ff, dropout_prob, max_len, vocabulary_size)
+    model = build_model(layers_count, hidden_size, heads_count,
+                        d_ff, dropout_prob, max_len, vocabulary_size)
 
     logger.info(model)
     logger.info('{parameters_count} parameters'.format(
@@ -82,7 +86,7 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
         collate_fn=pretraining_collate_function)
 
     n_steps = len(train_dataloader) * epochs
-    
+
     optimizer = BertAdam(model.parameters(), lr=1e-3, warmup=0.05, t_total=n_steps)
 
     checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
@@ -120,7 +124,8 @@ def finetune(pretrained_checkpoint,
     val_path = val_path if data_dir is None else join(data_dir, val_path)
     dictionary_path = dictionary_path if data_dir is None else join(data_dir, dictionary_path)
 
-    run_name = run_name if run_name is not None else make_run_name(RUN_NAME_FORMAT, phase='finetune', config=config)
+    run_name = run_name if run_name is not None else make_run_name(
+        RUN_NAME_FORMAT, phase='finetune', config=config)
     logger = make_logger(run_name, log_output)
     logger.info('Run name : {run_name}'.format(run_name=run_name))
     logger.info(config)
@@ -137,10 +142,12 @@ def finetune(pretrained_checkpoint,
     logger.info('Train dataset size : {dataset_size}'.format(dataset_size=len(train_dataset)))
 
     logger.info('Building model...')
-    pretrained_model = build_model(layers_count, hidden_size, heads_count, d_ff, dropout_prob, max_len, vocabulary_size)
-    pretrained_model.load_state_dict(torch.load(pretrained_checkpoint, map_location='cpu')['state_dict'])
+    pretrained_model = build_model(layers_count, hidden_size, heads_count,
+                                   d_ff, dropout_prob, max_len, vocabulary_size)
+    pretrained_model.load_state_dict(torch.load(
+        pretrained_checkpoint, map_location='cpu')['state_dict'])
 
-    model = FineTuneModel(pretrained_model, hidden_size, num_classes=2)
+    model = FineTuneModel(pretrained_model, hidden_size, num_classes=3)
 
     logger.info(model)
     logger.info('{parameters_count} parameters'.format(
@@ -213,7 +220,8 @@ def add_pretrain_parser(subparsers):
     pretrain_parser.add_argument('--d_ff', type=int, default=128)
     pretrain_parser.add_argument('--dropout_prob', type=float, default=0.1)
 
-    pretrain_parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    pretrain_parser.add_argument(
+        '--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def add_finetune_parser(subparsers):
@@ -223,9 +231,9 @@ def add_finetune_parser(subparsers):
     finetune_parser.add_argument('--pretrained_checkpoint', type=str, required=True)
 
     finetune_parser.add_argument('--data_dir', type=str, default=None)
-    finetune_parser.add_argument('--train_data', type=str, default='train.tsv')
-    finetune_parser.add_argument('--val_data', type=str, default='dev.tsv')
-    finetune_parser.add_argument('--dictionary', type=str, default='dictionary.txt')
+    finetune_parser.add_argument('--train_path', type=str, default='train.tsv')
+    finetune_parser.add_argument('--val_path', type=str, default='dev.tsv')
+    finetune_parser.add_argument('--dictionary_path', type=str, default='dictionary.txt')
 
     finetune_parser.add_argument('--checkpoint_dir', type=str, default=None)
     finetune_parser.add_argument('--log_output', type=str, default=None)
@@ -249,4 +257,5 @@ def add_finetune_parser(subparsers):
     finetune_parser.add_argument('--d_ff', type=int, default=128)
     finetune_parser.add_argument('--dropout_prob', type=float, default=0.1)
 
-    finetune_parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
+    finetune_parser.add_argument(
+        '--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
