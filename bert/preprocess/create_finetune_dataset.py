@@ -32,10 +32,12 @@ kmeans_video.cluster_centers_ = centroids_video
 
 label_dict = {}  # map filename -> corresponding label
 input_path_train_video, label_file, data_type = sys.argv[1], sys.argv[2], sys.argv[3]
-meta_data_df = pd.read_csv(label_file)
-meta_data = meta_data_df.values
-X, y, group = [], [], []
-label_dict_train, label_dict_dev, label_dict_test = {}, {}, {}
+if(data_type != 'meld'):
+    meta_data_df = pd.read_csv(label_file)
+    meta_data = meta_data_df.values
+    X, y, group = [], [], []
+else:
+    label_dict_train, label_dict_dev, label_dict_test = {}, {}, {}
 if(data_type == 'meld'):
     meta_data_train_path = os.path.join(label_file, 'train_sent_emo.csv')
     meta_data_dev_path = os.path.join(label_file, 'dev_sent_emo.csv')
