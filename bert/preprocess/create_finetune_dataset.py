@@ -45,20 +45,20 @@ if(data_type == 'meld'):
     metadata_train = pd.read_csv(meta_data_train_path).values
     metadata_dev = pd.read_csv(meta_data_dev_path).values
     metadata_test = pd.read_csv(meta_data_test_path).values
-    label_list = metadata_train[:, 4]
+    label_list = metadata_train[:, 3]
     le = LabelEncoder().fit(label_list)
     for row in metadata_train:
         dia_id, utt_id = row[5], row[6]
         file_str = 'dia'+str(dia_id)+'_'+'utt'+str(utt_id)
-        label_dict_train[file_str] = le.transform([row[4]])[0]
+        label_dict_train[file_str] = le.transform([row[3]])[0]
     for row in metadata_dev:
         dia_id, utt_id = row[5], row[6]
         file_str = 'dia'+str(dia_id)+'_'+'utt'+str(utt_id)
-        label_dict_dev[file_str] = le.transform([row[4]])[0]
+        label_dict_dev[file_str] = le.transform([row[3]])[0]
     for row in metadata_test:
         dia_id, utt_id = row[5], row[6]
         file_str = 'dia'+str(dia_id)+'_'+'utt'+str(utt_id)
-        label_dict_test[file_str] = le.transform([row[4]])[0]
+        label_dict_test[file_str] = le.transform([row[3]])[0]
 elif(data_type == 'cremad'):
     label_list = []
     for row in meta_data:
