@@ -6,6 +6,8 @@ from .datasets.pretraining import PairedDataset
 from .datasets.classification import SST2IndexedDataset
 from .trainer import Trainer
 from .utils.log import make_run_name, make_logger, make_checkpoint_dir
+from .utils.convert import convert_to_tensor, convert_to_array
+
 from .utils.collate import pretraining_collate_function, classification_collate_function
 from .optimizers import BertAdam
 
@@ -109,6 +111,20 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
     trainer.run(epochs=epochs)
     return trainer
 
+    def fe_helper(model, dataloader):
+        for inputs, targets, batch_count in tqdm(dataloader):
+            inputs = convert_to_tensor(inputs, device)
+            targets = convert_to_tensor(targets, device)
+            # try:
+            token_predictions, classification_embedding = model(
+                inputs, targets)  # loss_model is the pretrain bert model
+            # except:
+            #     self.optimizer.zero_grad()
+            #     continue
+            classification_embedding = convert_to_array(classification_embedding)
+            targets = convert_to_array(targets)
+            print(classification_embedding.shape, targets.shape)
+
 
 def finetune(pretrained_checkpoint,
              data_dir, train_path, val_path, test_path, dictionary_path,
@@ -173,20 +189,7 @@ def finetune(pretrained_checkpoint,
         batch_size=batch_size,
         collate_fn=classification_collate_function)
 
-    trainer = Trainer(
-        loss_model=pretrained_model,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        metric_functions=metric_functions,
-        optimizer=optimizer,
-        clip_grads=clip_grads,
-        logger=logger,
-        checkpoint_dir=checkpoint_dir,
-        print_every=print_every,
-        save_every=save_every,
-        device=device
-    )
-    trainer.extract_feature()
+    fe_helper(pretrained_model, train_dataloader)
     # =================================================
 
     model = FineTuneModel(pretrained_model, hidden_size, num_classes=3)
