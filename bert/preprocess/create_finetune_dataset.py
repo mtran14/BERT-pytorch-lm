@@ -73,7 +73,7 @@ elif(data_type == 'cremad'):
 
 elif(data_type == 'mosi'):
     for row in meta_data:
-        label_dict[row[0]] = [row[-1], row[0][:-5]]
+        label_dict[row[0]] = [row[-1]+1, row[0][:-5]]
         group.append(row[0][:-5])
 
 if(data_type != "meld"):
