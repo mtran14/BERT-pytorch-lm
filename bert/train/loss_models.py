@@ -46,8 +46,7 @@ class ClassificationLossModel(nn.Module):
     def forward(self, inputs, targets):
 
         outputs = self.model(inputs)
-        # predictions = outputs.argmax(dim=1)
-        print(output.size())
+        predictions = outputs.argmax(dim=1)
         loss = self.loss_function(outputs, targets)
 
         return predictions, loss.unsqueeze(dim=0)
