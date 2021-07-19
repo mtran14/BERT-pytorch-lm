@@ -7,6 +7,24 @@ from sklearn.preprocessing import StandardScaler
 import pickle
 from sklearn.cluster import KMeans
 import random
+
+
+def mosi_filename_convert(input_string):
+    # convert input string such that last 4 index are digits
+    cnt = 0
+    output_str = ''
+    for i in reversed(range(len(input_string))):
+        if(input_string[i].isdigit()):
+            cnt += 1
+            output_str += input_string[i]
+        else:
+            if(cnt < 4):
+                output_str += '0'*(4-cnt)
+                cnt = 4
+            output_str += input_string[i]
+    return output_str[::-1]
+
+
 centroids_video = pd.read_csv('~/transformer/data/centroids_facemesh_5000.csv', header=None).values
 kmeans_video = KMeans(n_clusters=centroids_video.shape[0])
 kmeans_video.cluster_centers_ = centroids_video
@@ -45,7 +63,7 @@ for file in os.listdir(input_path_train_video):
     for i in range(len(current_cluster)):
         current_str += str(current_cluster[i]) + ' '
     label = label_dict[file.split('.')[0]]
-    pid = file.split('.')[0][:-5]
+    pid = mosi_filename_convert(file.split('.')[0])[:-5]
     if(pid in train_group):
         output_train.append([current_str.strip(), label])
     elif(pid in val_group):
