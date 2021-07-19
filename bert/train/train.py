@@ -188,7 +188,7 @@ def finetune(pretrained_checkpoint,
         test_dataset,
         batch_size=batch_size,
         collate_fn=classification_collate_function)
-
+    pretrained_model.to(device)
     fe_helper(pretrained_model, train_dataloader)
     # =================================================
 
