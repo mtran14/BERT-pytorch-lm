@@ -74,8 +74,11 @@ for file in os.listdir(input_path_train_video):
     current_str = ''
     for i in range(len(current_cluster)):
         current_str += str(current_cluster[i]) + ' '
-    label = label_dict[mosi_filename_convert(file.split('.')[0])][0]
-    pid = mosi_filename_convert(file.split('.')[0])[:-5]
+    if(data_type == 'mosi'):
+        label = label_dict[mosi_filename_convert(file.split('.')[0])][0]
+        pid = mosi_filename_convert(file.split('.')[0])[:-5]
+    elif(data_type == 'cremad'):
+        label, pid = label_dict[file.split('.')[0]][0], label_dict[file.split('.')[0]][1]
     if(pid in train_group):
         output_train.append([current_str.strip(), label])
     elif(pid in val_group):
