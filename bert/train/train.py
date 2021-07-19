@@ -249,6 +249,7 @@ def add_finetune_parser(subparsers):
     finetune_parser.add_argument('--data_dir', type=str, default=None)
     finetune_parser.add_argument('--train_path', type=str, default='train.tsv')
     finetune_parser.add_argument('--val_path', type=str, default='dev.tsv')
+    finetune_parser.add_argument('--test_path', type=str, default='dev.tsv')
     finetune_parser.add_argument('--dictionary_path', type=str, default='dictionary.txt')
 
     finetune_parser.add_argument('--checkpoint_dir', type=str, default=None)
