@@ -111,20 +111,6 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
     trainer.run(epochs=epochs)
     return trainer
 
-    def fe_helper(model, dataloader):
-        for inputs, targets, batch_count in tqdm(dataloader):
-            inputs = convert_to_tensor(inputs, device)
-            targets = convert_to_tensor(targets, device)
-            # try:
-            token_predictions, classification_embedding = model(
-                inputs, targets)  # loss_model is the pretrain bert model
-            # except:
-            #     self.optimizer.zero_grad()
-            #     continue
-            classification_embedding = convert_to_array(classification_embedding)
-            targets = convert_to_array(targets)
-            print(classification_embedding.shape, targets.shape)
-
 
 def finetune(pretrained_checkpoint,
              data_dir, train_path, val_path, test_path, dictionary_path,
@@ -173,6 +159,20 @@ def finetune(pretrained_checkpoint,
     print('Successfully load pretrained model...')
 
     # =================================================
+    def fe_helper(model, dataloader):
+        for inputs, targets, batch_count in tqdm(dataloader):
+            inputs = convert_to_tensor(inputs, device)
+            targets = convert_to_tensor(targets, device)
+            # try:
+            token_predictions, classification_embedding = model(
+                inputs, targets)  # loss_model is the pretrain bert model
+            # except:
+            #     self.optimizer.zero_grad()
+            #     continue
+            classification_embedding = convert_to_array(classification_embedding)
+            targets = convert_to_array(targets)
+            print(classification_embedding.shape, targets.shape)
+
     print('Extracting features ...')
     train_dataloader = DataLoader(
         train_dataset,
