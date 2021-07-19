@@ -156,6 +156,39 @@ def finetune(pretrained_checkpoint,
     pretrained_model.load_state_dict(trained_sd)
     print('Successfully load pretrained model...')
 
+    # =================================================
+    print('Extracting features ...')
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        collate_fn=classification_collate_function)
+
+    val_dataloader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        collate_fn=classification_collate_function)
+
+    test_dataloader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        collate_fn=classification_collate_function)
+
+    trainer = Trainer(
+        loss_model=pretrained_model,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
+        metric_functions=metric_functions,
+        optimizer=optimizer,
+        clip_grads=clip_grads,
+        logger=logger,
+        checkpoint_dir=checkpoint_dir,
+        print_every=print_every,
+        save_every=save_every,
+        device=device
+    )
+    trainer.extract_feature()
+    # =================================================
+
     model = FineTuneModel(pretrained_model, hidden_size, num_classes=3)
 
     logger.info(model)

@@ -68,4 +68,4 @@ class BERT(nn.Module):
         token_predictions = self.token_prediction_layer(encoded_sources)
         classification_embedding = encoded_sources[:, 0, :]
         classification_output = self.classification_layer(classification_embedding)
-        return token_predictions, classification_output
+        return token_predictions, classification_embedding
