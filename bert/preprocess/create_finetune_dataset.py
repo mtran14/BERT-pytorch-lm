@@ -138,6 +138,8 @@ else:
         current_str = ''
         for i in range(len(current_cluster)):
             current_str += str(current_cluster[i]) + ' '
+        if('final_videos_test' in file):
+            file = file.replace('final_videos_test', '')
         output_test.append([current_str.strip(), label_dict_test[file.split('.')[0]]])
     pd.DataFrame(output_train).to_csv(data_type + '_train.tsv',
                                       sep='\t', index=False, header=['sentence', 'label'])
