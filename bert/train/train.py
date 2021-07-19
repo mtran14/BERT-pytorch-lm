@@ -1,7 +1,7 @@
 from bert.preprocess.dictionary import IndexDictionary
 from .model.bert import build_model, FineTuneModel
 from .loss_models import MLMNSPLossModel, ClassificationLossModel
-from .metrics import mlm_accuracy, nsp_accuracy, classification_accuracy
+from .metrics import mlm_accuracy, nsp_accuracy, classification_accuracy, f1_weighted
 from .datasets.pretraining import PairedDataset
 from .datasets.classification import SST2IndexedDataset
 from .trainer import Trainer
@@ -11,7 +11,7 @@ from .optimizers import BertAdam
 
 import torch
 from torch.nn import DataParallel
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 from torch.utils.data import DataLoader
 
 import random
@@ -162,7 +162,7 @@ def finetune(pretrained_checkpoint,
         parameters_count=sum([p.nelement() for p in model.parameters()])))
 
     loss_model = ClassificationLossModel(model)
-    metric_functions = [classification_accuracy]
+    metric_functions = [classification_accuracy, f1_weighted]
 
     train_dataloader = DataLoader(
         train_dataset,
@@ -174,7 +174,7 @@ def finetune(pretrained_checkpoint,
         batch_size=batch_size,
         collate_fn=classification_collate_function)
 
-    optimizer = Adam(model.parameters(), lr=lr)
+    optimizer = AdamW(model.parameters(), lr=lr)
 
     checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
 
