@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import pickle
 from sklearn.cluster import KMeans
 import random
+from sklearn.preprocessing import LabelEncoder
 
 
 def mosi_filename_convert(input_string):
@@ -34,11 +35,22 @@ input_path_train_video, label_file, data_type = sys.argv[1], sys.argv[2], sys.ar
 meta_data_df = pd.read_csv(label_file)
 meta_data = meta_data_df.values
 X, y, group = [], [], []
+
 if(data_type == 'meld'):
     # do something
     pass
 elif(data_type == 'cremad'):
-    pass
+    label_list = []
+    for row in meta_data:
+        if(len(row[10]) == 1):
+            label_list.append(row[10])
+    le = LabelEncoder().fit(label_list)
+    for row in meta_data:
+        if(len(row[10]) == 1):
+            label = le.transform([row[10]])[0]
+        label_dict[row[7]] = [label, row[7][:4]]
+        group.append(row[7][:4])
+
 elif(data_type == 'mosi'):
     for row in meta_data:
         label_dict[row[0]] = [row[-1], row[0][:-5]]
