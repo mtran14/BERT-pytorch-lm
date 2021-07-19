@@ -111,7 +111,7 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
 
 
 def finetune(pretrained_checkpoint,
-             data_dir, train_path, val_path, dictionary_path,
+             data_dir, train_path, val_path, test_path, dictionary_path,
              vocabulary_size, batch_size, max_len, epochs, lr, clip_grads, device,
              layers_count, hidden_size, heads_count, d_ff, dropout_prob,
              log_output, checkpoint_dir, print_every, save_every, config, run_name=None, **_):
@@ -139,6 +139,7 @@ def finetune(pretrained_checkpoint,
     logger.info('Loading datasets...')
     train_dataset = SST2IndexedDataset(data_path=train_path, dictionary=dictionary)
     val_dataset = SST2IndexedDataset(data_path=val_path, dictionary=dictionary)
+    test_dataset = SST2IndexedDataset(data_path=test_path, dictionary=dictionary)
     logger.info('Train dataset size : {dataset_size}'.format(dataset_size=len(train_dataset)))
 
     logger.info('Building model...')
@@ -174,7 +175,12 @@ def finetune(pretrained_checkpoint,
         batch_size=batch_size,
         collate_fn=classification_collate_function)
 
-    optimizer = AdamW(model.parameters(), lr=lr)
+    test_dataloader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        collate_fn=classification_collate_function)
+
+    optimizer = Adam(model.parameters(), lr=lr)
 
     checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
 
@@ -190,7 +196,8 @@ def finetune(pretrained_checkpoint,
         checkpoint_dir=checkpoint_dir,
         print_every=print_every,
         save_every=save_every,
-        device=device
+        device=device,
+        test_dataloader=test_dataloader
     )
 
     trainer.run(epochs=epochs)
@@ -204,6 +211,7 @@ def add_pretrain_parser(subparsers):
     pretrain_parser.add_argument('--data_dir', type=str, default=None)
     pretrain_parser.add_argument('--train_path', type=str, default='train.txt')
     pretrain_parser.add_argument('--val_path', type=str, default='val.txt')
+    pretrain_parser.add_argument('--test_path', type=str, default='test.txt')
     pretrain_parser.add_argument('--dictionary_path', type=str, default='dictionary.txt')
 
     pretrain_parser.add_argument('--checkpoint_dir', type=str, default=None)

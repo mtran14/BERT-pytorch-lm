@@ -17,6 +17,7 @@ LOG_FORMAT = (
     "Val Loss: {val_loss:<.6} "
     "Train Metrics: {train_metrics} "
     "Val Metrics: {val_metrics} "
+    "Test Metrics: {test_metrics} "
     "Learning rate: {current_lr:<.4} "
 )
 
@@ -25,13 +26,14 @@ class Trainer:
 
     def __init__(self, loss_model, train_dataloader, val_dataloader,
                  metric_functions, device, optimizer, clip_grads,
-                 logger, checkpoint_dir, print_every, save_every):
+                 logger, checkpoint_dir, print_every, save_every, test_dataloader=None):
 
         self.device = device
 
         self.loss_model = loss_model.to(self.device)
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
+        self.test_dataloader = test_dataloader
 
         self.metric_functions = metric_functions
         self.optimizer = optimizer
@@ -107,6 +109,11 @@ class Trainer:
             self.loss_model.eval()
 
             val_epoch_loss, val_epoch_metrics = self.run_epoch(self.val_dataloader, mode='val')
+            if(self.test_dataloader):
+                test_epoch_loss, test_epoch_metrics = self.run_epoch(
+                    self.test_dataloader, mode='val')
+            else:
+                test_epoch_metrics = [0, 0]
 
             if epoch % self.print_every == 0 and self.logger:
                 per_second = len(self.train_dataloader.dataset) / \
@@ -121,6 +128,8 @@ class Trainer:
                                                                for metric in train_epoch_metrics],
                                                 val_metrics=[round(metric, 4)
                                                              for metric in val_epoch_metrics],
+                                                test_metrics=[round(metric, 4)
+                                                              for metric in test_epoch_metrics],
                                                 current_lr=current_lr,
                                                 elapsed=self._elapsed_time()
                                                 )
