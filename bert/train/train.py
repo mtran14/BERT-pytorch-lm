@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 import random
 import numpy as np
 from os.path import join
-
+from tqdm import tqdm
 
 RUN_NAME_FORMAT = (
     "BERT-"
