@@ -296,7 +296,7 @@ def add_finetune_parser(subparsers):
     finetune_parser.add_argument('--val_path', type=str, default='dev.tsv')
     finetune_parser.add_argument('--test_path', type=str, default='dev.tsv')
     finetune_parser.add_argument('--dictionary_path', type=str, default='dictionary.txt')
-    pretrain_parser.add_argument('--num_class', type=int, default=2)
+    finetune_parser.add_argument('--num_class', type=int, default=2)
 
     finetune_parser.add_argument('--checkpoint_dir', type=str, default=None)
     finetune_parser.add_argument('--log_output', type=str, default=None)
