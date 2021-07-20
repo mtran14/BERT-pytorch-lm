@@ -1,5 +1,5 @@
 from bert.preprocess import PAD_INDEX
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, balanced_accuracy_score
 
 import numpy as np
 
@@ -25,8 +25,9 @@ def nsp_accuracy(predictions, targets):
 
 
 def classification_accuracy(predictions, targets):
-        corrects = np.equal(predictions, targets)
-        return corrects.mean()
-
+        # corrects = np.equal(predictions, targets)
+        # return corrects.mean()
+        return balanced_accuracy_score(targets, predictions)
+        
 def f1_weighted(predictions, targets):
     return f1_score(targets, predictions)
