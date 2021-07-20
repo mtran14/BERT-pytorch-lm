@@ -29,4 +29,4 @@ def classification_accuracy(predictions, targets):
         return corrects.mean()
 
 def f1_weighted(predictions, targets):
-    return f1_score(targets, predictions, average='weighted')
+    return f1_score(targets, predictions)
