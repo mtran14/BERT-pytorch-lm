@@ -14,7 +14,7 @@ class SST2IndexedDataset:
                     token) for token in tokenized_sentence.split()]
                 if(len(indexed_sentence) < 5):
                     continue
-                self.data.append((indexed_sentence, int(int(sentiment) >= 1)))
+                self.data.append((indexed_sentence, int(int(sentiment))))
 
     def __getitem__(self, item):
         indexed_text, sentiment = self.data[item]
