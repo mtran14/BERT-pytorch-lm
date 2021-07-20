@@ -114,7 +114,7 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
 
 
 def finetune(pretrained_checkpoint,
-             data_dir, train_path, val_path, test_path, dictionary_path,
+             data_dir, train_path, val_path, test_path, dictionary_path, num_class,
              vocabulary_size, batch_size, max_len, epochs, lr, clip_grads, device,
              layers_count, hidden_size, heads_count, d_ff, dropout_prob,
              log_output, checkpoint_dir, print_every, save_every, config, run_name=None, **_):
@@ -160,48 +160,48 @@ def finetune(pretrained_checkpoint,
     print('Successfully load pretrained model...')
 
     # =================================================
-    def fe_helper(model, dataloader, file_name_out):
-        features, labels = [], []
-        for inputs, targets, batch_count in tqdm(dataloader):
-            inputs = convert_to_tensor(inputs, device)
-            targets = convert_to_tensor(targets, device)
-            # try:
-            token_predictions, classification_embedding = model(
-                inputs)  # loss_model is the pretrain bert model
-            # except:
-            #     self.optimizer.zero_grad()
-            #     continue
-            classification_embedding = convert_to_array(classification_embedding)
-            targets = convert_to_array(targets)
-            features.append(classification_embedding)
-            labels.append(targets)
-        f_features = np.concatenate(features, axis=0)
-        f_labels = np.concatenate(labels, axis=0).reshape(-1, 1)
-        f_out = np.concatenate([f_features, f_labels], axis=1)
-        pd.DataFrame(f_out).to_csv(file_name_out, header=None, index=False)
-
-    print('Extracting features ...')
-    train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        collate_fn=classification_collate_function)
-
-    val_dataloader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        collate_fn=classification_collate_function)
-
-    test_dataloader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        collate_fn=classification_collate_function)
-    pretrained_model.to(device)
-    fe_helper(pretrained_model, train_dataloader, "train.csv")
-    fe_helper(pretrained_model, val_dataloader, "dev.csv")
-    fe_helper(pretrained_model, test_dataloader, "test.csv")
+    # def fe_helper(model, dataloader, file_name_out):
+    #     features, labels = [], []
+    #     for inputs, targets, batch_count in tqdm(dataloader):
+    #         inputs = convert_to_tensor(inputs, device)
+    #         targets = convert_to_tensor(targets, device)
+    #         # try:
+    #         token_predictions, classification_embedding = model(
+    #             inputs)  # loss_model is the pretrain bert model
+    #         # except:
+    #         #     self.optimizer.zero_grad()
+    #         #     continue
+    #         classification_embedding = convert_to_array(classification_embedding)
+    #         targets = convert_to_array(targets)
+    #         features.append(classification_embedding)
+    #         labels.append(targets)
+    #     f_features = np.concatenate(features, axis=0)
+    #     f_labels = np.concatenate(labels, axis=0).reshape(-1, 1)
+    #     f_out = np.concatenate([f_features, f_labels], axis=1)
+    #     pd.DataFrame(f_out).to_csv(file_name_out, header=None, index=False)
+    #
+    # print('Extracting features ...')
+    # train_dataloader = DataLoader(
+    #     train_dataset,
+    #     batch_size=batch_size,
+    #     collate_fn=classification_collate_function)
+    #
+    # val_dataloader = DataLoader(
+    #     val_dataset,
+    #     batch_size=batch_size,
+    #     collate_fn=classification_collate_function)
+    #
+    # test_dataloader = DataLoader(
+    #     test_dataset,
+    #     batch_size=batch_size,
+    #     collate_fn=classification_collate_function)
+    # pretrained_model.to(device)
+    # fe_helper(pretrained_model, train_dataloader, "train.csv")
+    # fe_helper(pretrained_model, val_dataloader, "dev.csv")
+    # fe_helper(pretrained_model, test_dataloader, "test.csv")
     # =================================================
 
-    model = FineTuneModel(pretrained_model, hidden_size, num_classes=3)
+    model = FineTuneModel(pretrained_model, hidden_size, num_classes=num_class)
 
     logger.info(model)
     logger.info('{parameters_count} parameters'.format(
@@ -258,6 +258,7 @@ def add_pretrain_parser(subparsers):
     pretrain_parser.add_argument('--val_path', type=str, default='val.txt')
     pretrain_parser.add_argument('--test_path', type=str, default='test.txt')
     pretrain_parser.add_argument('--dictionary_path', type=str, default='dictionary.txt')
+    pretrain_parser.add_argument('--num_class', type=int, default=2)
 
     pretrain_parser.add_argument('--checkpoint_dir', type=str, default=None)
     pretrain_parser.add_argument('--log_output', type=str, default=None)
