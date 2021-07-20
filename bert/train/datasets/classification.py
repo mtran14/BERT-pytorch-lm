@@ -10,7 +10,10 @@ class SST2IndexedDataset:
 
             for line in file:
                 tokenized_sentence, sentiment = line.strip().split('\t')
-                indexed_sentence = [dictionary.token_to_index(token) for token in tokenized_sentence.split()]
+                indexed_sentence = [dictionary.token_to_index(
+                    token) for token in tokenized_sentence.split()]
+                if(len(indexed_sentence) < 5):
+                    continue
                 self.data.append((indexed_sentence, int(sentiment)))
 
     def __getitem__(self, item):
