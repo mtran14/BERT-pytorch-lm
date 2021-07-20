@@ -217,12 +217,12 @@ def finetune(pretrained_checkpoint,
 
     val_dataloader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
+        batch_size=64,
         collate_fn=classification_collate_function)
 
     test_dataloader = DataLoader(
         test_dataset,
-        batch_size=batch_size,
+        batch_size=64,
         collate_fn=classification_collate_function)
 
     optimizer = Adam(model.parameters(), lr=lr)
