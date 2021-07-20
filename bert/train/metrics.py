@@ -30,4 +30,4 @@ def classification_accuracy(predictions, targets):
         return balanced_accuracy_score(targets, predictions)
         
 def f1_weighted(predictions, targets):
-    return f1_score(targets, predictions)
+    return f1_score(targets, predictions, average='weighted')
