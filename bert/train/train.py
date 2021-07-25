@@ -1,14 +1,14 @@
 from bert.preprocess.dictionary import IndexDictionary
-from .model.bert import build_model, FineTuneModel
-from .loss_models import MLMNSPLossModel, ClassificationLossModel
+from .model.bert import build_model, build_cmodel, FineTuneModel
+from .loss_models import MLMNSPLossModel, ClassificationLossModel, MLMNSPLossModelC
 from .metrics import mlm_accuracy, nsp_accuracy, classification_accuracy, f1_weighted
-from .datasets.pretraining import PairedDataset
+from .datasets.pretraining import PairedDataset, PairedDatasetC
 from .datasets.classification import SST2IndexedDataset
 from .trainer import Trainer
 from .utils.log import make_run_name, make_logger, make_checkpoint_dir
 from .utils.convert import convert_to_tensor, convert_to_array
 
-from .utils.collate import pretraining_collate_function, classification_collate_function
+from .utils.collate import pretraining_collate_function, classification_collate_function, pretraining_collate_functionC
 from .optimizers import BertAdam
 
 import torch
@@ -41,77 +41,140 @@ def pretrain(data_dir, train_path, val_path, dictionary_path,
     np.random.seed(0)
     torch.manual_seed(0)
 
-    train_path = train_path if data_dir is None else join(data_dir, train_path)
-    val_path = val_path if data_dir is None else join(data_dir, val_path)
-    dictionary_path = dictionary_path if data_dir is None else join(data_dir, dictionary_path)
+    isC = False if train_path.endswith('.txt') else True
+    
+    if(not isC):
+        train_path = train_path if data_dir is None else join(data_dir, train_path)
+        val_path = val_path if data_dir is None else join(data_dir, val_path)
+        dictionary_path = dictionary_path if data_dir is None else join(data_dir, dictionary_path)
 
-    run_name = run_name if run_name is not None else make_run_name(
-        RUN_NAME_FORMAT, phase='pretrain', config=config)
-    logger = make_logger(run_name, log_output)
-    logger.info('Run name : {run_name}'.format(run_name=run_name))
-    logger.info(config)
+        run_name = run_name if run_name is not None else make_run_name(
+            RUN_NAME_FORMAT, phase='pretrain', config=config)
+        logger = make_logger(run_name, log_output)
+        logger.info('Run name : {run_name}'.format(run_name=run_name))
+        logger.info(config)
 
-    logger.info('Constructing dictionaries...')
-    dictionary = IndexDictionary.load(dictionary_path=dictionary_path,
-                                      vocabulary_size=vocabulary_size)
-    vocabulary_size = len(dictionary)
-    logger.info(f'dictionary vocabulary : {vocabulary_size} tokens')
+        logger.info('Constructing dictionaries...')
+        dictionary = IndexDictionary.load(dictionary_path=dictionary_path,
+                                          vocabulary_size=vocabulary_size)
+        vocabulary_size = len(dictionary)
+        logger.info(f'dictionary vocabulary : {vocabulary_size} tokens')
 
-    logger.info('Loading datasets...')
-    train_dataset = PairedDataset(
-        data_path=train_path, dictionary=dictionary, dataset_limit=dataset_limit)
-    val_dataset = PairedDataset(data_path=val_path, dictionary=dictionary,
-                                dataset_limit=dataset_limit)
-    logger.info('Train dataset size : {dataset_size}'.format(dataset_size=len(train_dataset)))
+        logger.info('Loading datasets...')
+        train_dataset = PairedDataset(
+            data_path=train_path, dictionary=dictionary, dataset_limit=dataset_limit)
+        val_dataset = PairedDataset(data_path=val_path, dictionary=dictionary,
+                                    dataset_limit=dataset_limit)
+        logger.info('Train dataset size : {dataset_size}'.format(dataset_size=len(train_dataset)))
 
-    logger.info('Building model...')
-    model = build_model(layers_count, hidden_size, heads_count,
-                        d_ff, dropout_prob, max_len, vocabulary_size)
+        logger.info('Building model...')
+        model = build_model(layers_count, hidden_size, heads_count,
+                            d_ff, dropout_prob, max_len, vocabulary_size)
 
-    logger.info(model)
-    logger.info('{parameters_count} parameters'.format(
-        parameters_count=sum([p.nelement() for p in model.parameters()])))
+        logger.info(model)
+        logger.info('{parameters_count} parameters'.format(
+            parameters_count=sum([p.nelement() for p in model.parameters()])))
 
-    loss_model = MLMNSPLossModel(model)
-    if torch.cuda.device_count() > 1:
-        loss_model = DataParallel(loss_model, output_device=1)
+        loss_model = MLMNSPLossModel(model)
+        if torch.cuda.device_count() > 1:
+            loss_model = DataParallel(loss_model, output_device=1)
 
-    metric_functions = [mlm_accuracy, nsp_accuracy]
+        metric_functions = [mlm_accuracy, nsp_accuracy]
 
-    train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        collate_fn=pretraining_collate_function)
+        train_dataloader = DataLoader(
+            train_dataset,
+            batch_size=batch_size,
+            collate_fn=pretraining_collate_function)
 
-    val_dataloader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        collate_fn=pretraining_collate_function)
+        val_dataloader = DataLoader(
+            val_dataset,
+            batch_size=batch_size,
+            collate_fn=pretraining_collate_function)
 
-    n_steps = len(train_dataloader) * epochs
+        n_steps = len(train_dataloader) * epochs
 
-    optimizer = BertAdam(model.parameters(), lr=1e-3, warmup=0.05, t_total=n_steps)
+        optimizer = BertAdam(model.parameters(), lr=1e-3, warmup=0.05, t_total=n_steps)
 
-    checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
+        checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
 
-    logger.info('Start training...')
-    trainer = Trainer(
-        loss_model=loss_model,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        metric_functions=metric_functions,
-        optimizer=optimizer,
-        clip_grads=clip_grads,
-        logger=logger,
-        checkpoint_dir=checkpoint_dir,
-        print_every=print_every,
-        save_every=save_every,
-        device=device
-    )
+        logger.info('Start training...')
+        trainer = Trainer(
+            loss_model=loss_model,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            metric_functions=metric_functions,
+            optimizer=optimizer,
+            clip_grads=clip_grads,
+            logger=logger,
+            checkpoint_dir=checkpoint_dir,
+            print_every=print_every,
+            save_every=save_every,
+            device=device
+        )
 
-    trainer.run(epochs=epochs)
-    return trainer
+        trainer.run(epochs=epochs)
+        return trainer
+    else:
+        run_name = run_name if run_name is not None else make_run_name(
+            RUN_NAME_FORMAT, phase='pretrain', config=config)
+        logger = make_logger(run_name, log_output)
+        logger.info('Run name : {run_name}'.format(run_name=run_name))
+        logger.info(config)
+        
+        logger.info('Loading datasets...')
+        train_dataset = PairedDatasetC(
+            data_path=train_path, dataset_limit=dataset_limit)
+        val_dataset = PairedDatasetC(
+            data_path=val_path, dataset_limit=dataset_limit)
+        logger.info('Train dataset size : {dataset_size}'.format(dataset_size=len(train_dataset)))
+        
+        logger.info('Building model...')
+        model = build_cmodel(layers_count, hidden_size, heads_count,
+                            d_ff, dropout_prob, max_len, vocabulary_size)
+                            
+        logger.info(model)
+        logger.info('{parameters_count} parameters'.format(
+            parameters_count=sum([p.nelement() for p in model.parameters()])))
 
+        loss_model = MLMNSPLossModelC(model)
+        if torch.cuda.device_count() > 1:
+            loss_model = DataParallel(loss_model, output_device=1)
+            
+        metric_functions = [nsp_accuracy]
+
+        train_dataloader = DataLoader(
+            train_dataset,
+            batch_size=batch_size,
+            collate_fn=pretraining_collate_functionC)
+
+        val_dataloader = DataLoader(
+            val_dataset,
+            batch_size=batch_size,
+            collate_fn=pretraining_collate_functionC)
+            
+        n_steps = len(train_dataloader) * epochs
+
+        optimizer = BertAdam(model.parameters(), lr=1e-3, warmup=0.05, t_total=n_steps)
+
+        checkpoint_dir = make_checkpoint_dir(checkpoint_dir, run_name, config)
+
+        logger.info('Start training...')
+        trainer = Trainer(
+            loss_model=loss_model,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            metric_functions=metric_functions,
+            optimizer=optimizer,
+            clip_grads=clip_grads,
+            logger=logger,
+            checkpoint_dir=checkpoint_dir,
+            print_every=print_every,
+            save_every=save_every,
+            device=device
+        )
+
+        trainer.run(epochs=epochs)
+        return trainer
 
 def finetune(pretrained_checkpoint,
              data_dir, train_path, val_path, test_path, dictionary_path, num_class,

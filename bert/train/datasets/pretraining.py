@@ -3,7 +3,9 @@ from bert.preprocess import PAD_INDEX, MASK_INDEX, CLS_INDEX, SEP_INDEX
 from tqdm import tqdm
 
 from random import random, randint
-
+import numpy as np
+import os
+import pandas as pd
 
 class IndexedCorpus:
     def __init__(self, data_path, dictionary, dataset_limit=None):
@@ -127,3 +129,86 @@ class PairedDataset:
 
     def __len__(self):
         return self.dataset_size
+
+class PairedDatasetC:
+    def __init__(self, data_path, dataset_limit=None):
+        #load the whole dataset to RAM (less than 10 GB), dataset_limit refers to nfiles to load
+        self.data = []
+        self.len = 0
+        self.n_features = 0
+        for file in os.listdir(data_path):
+            fdata = pd.read_csv(os.path.join(data_path, file), header=None).values
+            self.n_features = fdata.shape[1]
+            if(fdata.shape[0] >= 10):
+                self.data.append(fdata)
+                self.len += 1
+                if(dataset_limit and self.len >= dataset_limit):
+                    break
+        self.THRESHOLD = 0.15
+
+        # np.random.seed(0); self.CLS_INDEX = np.random.rand(1, self.n_features)
+        self.SEP_INDEX = self.CLS_INDEX = self.MASK_INDEX = self.PAD_INDEX = np.zeros((1, self.n_features))
+        # np.random.seed(1); self.SEP_INDEX = np.random.rand(1, self.n_features)
+
+    def mask_helper(self, current_video):
+        n_frames, n_features = current_video.shape[0], current_video.shape[1]
+        split_index = np.random.randint(5, n_frames-4)
+        partA, partB = current_video[:split_index, :], current_video[split_index:, :]
+
+        masked_video_A, masked_video_B = [], []
+        target_video_A, target_video_B = [], []
+
+        for i in range(partA.shape[0]):
+            r = random()
+            if(r < self.THRESHOLD):
+                masked_video_A.append(self.MASK_INDEX.reshape(-1,))
+                target_video_A.append(partA[i, :])
+            else:
+                masked_video_A.append(partA[i, :])
+                target_video_A.append(self.PAD_INDEX.reshape(-1,))
+
+        for i in range(partB.shape[0]):
+            r = random()
+            if(r < self.THRESHOLD):
+                masked_video_B.append(self.MASK_INDEX.reshape(-1,))
+                target_video_B.append(partB[i, :])
+            else:
+                masked_video_B.append(partB[i, :])
+                target_video_B.append(self.PAD_INDEX.reshape(-1,))
+
+        return [np.array(masked_video_A),
+                np.array(masked_video_B),
+                np.array(target_video_A),
+                np.array(target_video_B)]
+
+    def __getitem__(self, item):
+        current_video = self.data[item]
+        masked_video_A, masked_video_B, target_video_A, target_video_B = self.mask_helper(current_video)
+
+        if random() < 0.5:  # 50% of the time B is the actual next sentence that follows A
+            is_next = 1
+        else:  # 50% of the time it is a random sentence from the corpus
+            random_video_index = randint(0, self.len-1)
+            random_video = self.data[random_video_index]
+            unused1, masked_video_B, unused2, target_video_B = self.mask_helper(random_video)
+            is_next = 0
+
+        #sequence = [CLS_INDEX] + masked_video_A + [SEP_INDEX] + masked_video_B + [SEP_INDEX]
+        sequence = np.concatenate([self.CLS_INDEX,
+                                    masked_video_A,
+                                    self.SEP_INDEX,
+                                    masked_video_B,
+                                    self.SEP_INDEX], axis=0)
+        # segment : something like [0,0,0,0,0,1,1,1,1,1,1,1])
+        segment = [0] + [0] * len(masked_video_A) + [0] + [1] * len(masked_video_B) + [1]
+
+        # target = [PAD_INDEX] + A_target_sentence + [PAD_INDEX] + B_target_sentence + [PAD_INDEX]
+        target = np.concatenate([self.PAD_INDEX,
+                                    target_video_A,
+                                    self.PAD_INDEX,
+                                    target_video_B,
+                                    self.PAD_INDEX], axis=0)
+        return (sequence, segment), (target, is_next)
+
+    def __len__(self):
+        return self.len

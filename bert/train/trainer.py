@@ -62,11 +62,11 @@ class Trainer:
         for inputs, targets, batch_count in tqdm(dataloader):
             inputs = convert_to_tensor(inputs, self.device)
             targets = convert_to_tensor(targets, self.device)
-            try:
-                predictions, batch_losses = self.loss_model(inputs, targets)
-            except:
-                self.optimizer.zero_grad()
-                continue
+            # try:
+            predictions, batch_losses = self.loss_model(inputs, targets)
+            # except:
+            #     self.optimizer.zero_grad()
+            #     continue
             predictions = convert_to_array(predictions)
             targets = convert_to_array(targets)
             # print(predictions, targets)
